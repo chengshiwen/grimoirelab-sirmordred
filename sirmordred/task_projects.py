@@ -45,7 +45,8 @@ class TaskProjects(Task):
     projects_lock = Lock()
 
     def is_backend_task(self):
-        return False
+        with self.projects_lock:
+            return bool(self.__projects)
 
     @classmethod
     def get_projects(cls):
