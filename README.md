@@ -72,6 +72,8 @@ new data sources, thus you need to manually delete the dashboards `Data Status` 
 
  * **projects_file** (str: projects.json): Projects file path with repositories to be collected grouped by projects
  * **projects_url** (str: None): Projects file URL, the projects_file is required to store the file locally
+ * **projects_api** (str: None): Projects file API, the projects_file is required to store the file locally (now only GitLab supported)
+ * **projects_token** (str: None): Projects file token, the projects_api is required to set repository API (now only GitLab supported)
 ### [sortinghat]
 
  * **affiliate** (bool: True): Affiliate identities to organizations (**Required**)

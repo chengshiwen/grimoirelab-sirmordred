@@ -179,6 +179,18 @@ class Config():
                     "default": None,
                     "type": str,
                     "description": "Projects file URL"
+                },
+                "projects_api": {
+                    "optional": True,
+                    "default": None,
+                    "type": str,
+                    "description": "Projects file API"
+                },
+                "projects_token": {
+                    "optional": True,
+                    "default": None,
+                    "type": str,
+                    "description": "Projects file token"
                 }
             }
         }

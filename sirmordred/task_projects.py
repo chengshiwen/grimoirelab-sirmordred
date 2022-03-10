@@ -24,6 +24,8 @@
 import json
 import logging
 
+from urllib.parse import urlparse
+
 from threading import Lock
 
 import requests
@@ -126,11 +128,14 @@ class TaskProjects(Task):
 
         if config['projects']['projects_url']:
             projects = self.__get_projects_from_url()
+        elif config['projects']['projects_api'] and config['projects']['projects_token']:
+            projects = self.__get_projects_from_api()
         else:
             projects_file = config['projects']['projects_file']
             logger.info("Reading projects data from  %s ", projects_file)
             with open(projects_file, 'r') as fprojects:
                 projects = json.load(fprojects)
+
 
         TaskProjects.set_projects(projects)
 
@@ -143,6 +148,42 @@ class TaskProjects(Task):
         res = requests.get(projects_url)
         res.raise_for_status()
         projects = res.json()
+        with open(projects_file, "w") as fprojects:
+            json.dump(projects, fprojects, indent=True)
+
+        return projects
+
+    def __get_projects_from_api(self):
+        config = self.conf
+        projects_file = config['projects']['projects_file']
+        projects_api = config['projects']['projects_api']
+        projects_token = config['projects']['projects_token']
+
+        o = urlparse(projects_api)
+        baseurl = '%s://%s' % (o.scheme, o.netloc)
+        api_url = '%s/api/v4' % baseurl
+        git_url = '%s://gitlab:%s@%s/%s.git' % (o.scheme, projects_token, o.netloc, '%s')
+        headers = {'Private-Token': projects_token}
+
+        logger.info("Reading projects data from  %s ", baseurl)
+        projects = {}
+        total = 0
+        page = 1
+        while True:
+            items = requests.get('%s/projects?per_page=100&page=%d&order_by=path&simple=true' % (api_url, page), headers=headers).json()
+            for item in items:
+                ns = item['namespace']['full_path']
+                if ns not in projects:
+                    projects[ns] = dict(git=[])
+                projects[ns]['git'].append(git_url % item['path_with_namespace'])
+            total += len(items)
+            if len(items) < 100:
+                break
+            else:
+                page += 1
+        for k, v in projects.items():
+            v['git'].sort()
+        logger.info("Getting %d projects from  %s ", total, baseurl)
         with open(projects_file, "w") as fprojects:
             json.dump(projects, fprojects, indent=True)
 
